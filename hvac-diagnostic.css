@@ -1,0 +1,567 @@
+Here's the modified version with the CSS moved to a separate file:
+
+First, here's the HTML file:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HVAC Diagnostic Chart Generator</title>
+    <link rel="stylesheet" href="hvac-diagnostic.css">
+</head>
+<body>
+    <h1>HVAC Diagnostic Chart Generator</h1>
+    
+    <div class="container">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="refrigerant">Refrigerant Type:</label>
+                <select id="refrigerant">
+                    <option value="R22">R-22</option>
+                    <option value="R410A">R-410A</option>
+                    <option value="R407C">R-407C</option>
+                    <option value="R134a">R-134a</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ambient">Ambient Temperature (°F):</label>
+                <input type="number" id="ambient" value="40">
+            </div>
+            
+            <div class="form-group">
+                <label for="outdoorHumidity">Outdoor Humidity (%):</label>
+                <input type="number" id="outdoorHumidity" value="61">
+            </div>
+            
+            <div class="form-group">
+                <label for="indoorHumidity">Indoor Humidity (%):</label>
+                <input type="number" id="indoorHumidity" value="36">
+            </div>
+            
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer:</label>
+                <select id="manufacturer">
+                    <option value="Carrier">Carrier</option>
+                    <option value="Trane">Trane</option>
+                    <option value="York">York</option>
+                    <option value="Lennox">Lennox</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="lowAmbient">Low Ambient Controls:</label>
+                <select id="lowAmbient">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Unit Configuration:</label>
+            <div id="unitsContainer">
+                <div class="unit-input">
+                    <input type="text" placeholder="Unit ID/Number" class="unit-id">
+                    <select class="cooling-stages">
+                        <option value="1">1 Stage</option>
+                        <option value="2">2 Stages</option>
+                        <option value="3" selected>3 Stages</option>
+                    </select>
+                    <button type="button" class="remove-unit">×</button>
+                </div>
+            </div>
+            <button type="button" id="addUnit">Add Unit</button>
+        </div>
+        
+        <button type="button" id="calculate">Generate Diagnostic Charts</button>
+    </div>
+    
+    <div id="results" class="container" style="display: none;"></div>
+    
+    <script src="hvac-diagnostic.js"></script>
+</body>
+</html>
+```
+
+Now, here's the CSS file (save as "hvac-diagnostic.css"):
+
+```css
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+h1 {
+    color: #2563eb;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+#calculate {
+    display: block;
+    margin: 20px auto;
+    padding: 12px 24px;
+    font-size: 16px;
+}
+
+.results-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: #2563eb;
+    color: white;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.data-section {
+    margin-bottom: 15px;
+}
+
+.data-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #4b5563;
+    font-size: 16px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+}
+
+.diagnostic-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.diagnostic-table th {
+    background-color: #f1f5f9;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.diagnostic-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.diagnostic-table tr:last-child td {
+    border-bottom: none;
+}
+
+.diagnostic-table tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.system-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    font-weight: 600;
+    color: #334155;
+}
+
+.print-btn {
+    background-color: #10b981;
+    margin-top: 10px;
+}
+
+.unit-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.unit-input .unit-id {
+    flex: 1;
+}
+
+.unit-input .cooling-stages {
+    flex: 1;
+}
+
+.unit-input .remove-unit {
+    flex: 0 0 40px;
+    padding: 8px;
+}
+
+#addUnit {
+    margin-top: 8px;
+    background-color: #10b981;
+}
+
+@media (max-width: 768px) {
+    .form-grid, .system-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .diagnostic-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+@media print {
+    body {
+        background-color: white;
+        padding: 0;
+    }
+    
+    .container:first-child, button, .print-btn {
+        display: none;
+    }
+    
+    .results-card {
+        box-shadow: none;
+        margin-bottom: 30px;
+        page-break-inside: avoid;
+    }
+    
+    .card-header {
+        background-color: #f1f5f9 !important;
+        color: #2563eb !important;
+    }
+}
+```
+
+And finally, here's the JavaScript file (save as "hvac-diagnostic.js"):
+
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    // Add and remove units functionality
+    document.getElementById('addUnit').addEventListener('click', function() {
+        const unitContainer = document.createElement('div');
+        unitContainer.className = 'unit-input';
+        
+        unitContainer.innerHTML = `
+            <input type="text" placeholder="Unit ID/Number" class="unit-id">
+            <select class="cooling-stages">
+                <option value="1">1 Stage</option>
+                <option value="2">2 Stages</option>
+                <option value="3" selected>3 Stages</option>
+            </select>
+            <button type="button" class="remove-unit">×</button>
+        `;
+        
+        document.getElementById('unitsContainer').appendChild(unitContainer);
+        
+        unitContainer.querySelector('.remove-unit').addEventListener('click', function() {
+            unitContainer.remove();
+        });
+    });
+    
+    // Set up initial remove buttons
+    document.querySelectorAll('.remove-unit').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.unit-input').remove();
+        });
+    });
+    
+    // Calculate button
+    document.getElementById('calculate').addEventListener('click', generateDiagnosticData);
+});
+
+function generateDiagnosticData() {
+    const refrigerant = document.getElementById('refrigerant').value;
+    const ambientTemp = parseFloat(document.getElementById('ambient').value);
+    const outdoorHumidity = parseFloat(document.getElementById('outdoorHumidity').value);
+    const indoorHumidity = parseFloat(document.getElementById('indoorHumidity').value);
+    const manufacturer = document.getElementById('manufacturer').value;
+    const lowAmbientControls = document.getElementById('lowAmbient').value === 'yes';
+    
+    const unitInputs = document.querySelectorAll('.unit-input');
+    const units = [];
+    
+    unitInputs.forEach(unit => {
+        const unitId = unit.querySelector('.unit-id').value || 'Unit ' + (units.length + 1);
+        const stages = parseInt(unit.querySelector('.cooling-stages').value);
+        units.push({ id: unitId, stages: stages });
+    });
+    
+    const resultsContainer = document.getElementById('results');
+    resultsContainer.style.display = 'block';
+    resultsContainer.innerHTML = '';
+    
+    // Generate results for each unit
+    units.forEach(unit => {
+        const data = calculateDiagnosticData(
+            refrigerant, 
+            ambientTemp, 
+            outdoorHumidity, 
+            indoorHumidity, 
+            manufacturer,
+            lowAmbientControls,
+            unit.stages
+        );
+        
+        const date = new Date();
+        const formattedDate = `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+        
+        const unitResultHtml = `
+            <div class="results-card">
+                <div class="card-header">${unit.id} Diagnostic Chart</div>
+                <div class="card-body">
+                    <div class="system-info">
+                        <div class="info-item">
+                            <span class="info-label">Refrigerant</span>
+                            <span class="info-value">${refrigerant}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Manufacturer</span>
+                            <span class="info-value">${manufacturer}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Ambient Temp</span>
+                            <span class="info-value">${ambientTemp}°F</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Outdoor Humidity</span>
+                            <span class="info-value">${outdoorHumidity}%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Indoor Humidity</span>
+                            <span class="info-value">${indoorHumidity}%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Low Ambient Controls</span>
+                            <span class="info-value">${lowAmbientControls ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Generated Date</span>
+                            <span class="info-value">${formattedDate}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h4>Cooling Performance Chart</h4>
+                        <table class="diagnostic-table">
+                            <thead>
+                                <tr>
+                                    <th>Stage</th>
+                                    <th>Suction Pressure (psig)</th>
+                                    <th>Liquid Pressure (psig)</th>
+                                    <th>Supply Air Temp (°F)</th>
+                                    <th>Return Air Temp (°F)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${generateStageTableRows(data.stages)}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button type="button" class="print-btn" onclick="window.print()">Print Chart</button>
+                </div>
+            </div>
+        `;
+        
+        resultsContainer.innerHTML += unitResultHtml;
+    });
+}
+
+function calculateDiagnosticData(refrigerant, ambientTemp, outdoorHumidity, indoorHumidity, manufacturer, lowAmbientControls, stageCount) {
+    // Base calculations for stage 1
+    let baseSuctionPressure = 0;
+    let baseLiquidPressure = 0;
+    let baseReturnTemp = 70; // Base return temp
+    let stages = [];
+    
+    // Calculate base pressures (stage 1) based on refrigerant type and ambient conditions
+    if (refrigerant === 'R22') {
+        if (lowAmbientControls) {
+            baseSuctionPressure = 72;
+            baseLiquidPressure = 140;
+        } else {
+            baseSuctionPressure = 60;
+            baseLiquidPressure = 108;
+        }
+    } else if (refrigerant === 'R410A') {
+        if (lowAmbientControls) {
+            baseSuctionPressure = 115;
+            baseLiquidPressure = 225;
+        } else {
+            baseSuctionPressure = 98;
+            baseLiquidPressure = 195;
+        }
+    } else if (refrigerant === 'R407C') {
+        if (lowAmbientControls) {
+            baseSuctionPressure = 78;
+            baseLiquidPressure = 150;
+        } else {
+            baseSuctionPressure = 65;
+            baseLiquidPressure = 125;
+        }
+    } else if (refrigerant === 'R134a') {
+        if (lowAmbientControls) {
+            baseSuctionPressure = 34;
+            baseLiquidPressure = 78;
+        } else {
+            baseSuctionPressure = 28;
+            baseLiquidPressure = 68;
+        }
+    }
+    
+    // Adjust pressures based on ambient temperature
+    const ambientAdjustment = (ambientTemp - 40) * 0.8;
+    baseSuctionPressure += ambientAdjustment;
+    baseLiquidPressure += ambientAdjustment * 2;
+    
+    // Add a slight randomization factor to make it look realistic
+    // Refrigerant pressures are rarely exact numbers in the field
+    const randomFactor = function() {
+        return Math.floor(Math.random() * 3);
+    };
+    
+    // Calculate pressures and temperatures for each stage
+    let baseSupplyTemp = lowAmbientControls ? 52 : 50;
+    
+    // Slight adjustment based on humidity - higher humidity means slightly higher supply temp
+    baseSupplyTemp += (indoorHumidity - 35) / 10;
+    
+    // Add a slight variation to the return temperature based on indoor humidity
+    baseReturnTemp += (indoorHumidity - 35) / 20;
+    
+    for (let i = 1; i <= stageCount; i++) {
+        // For each additional stage, suction increases slightly and liquid increases more
+        const stageFactor = (i - 1) * 0.5;
+        const suctionPressure = Math.round(baseSuctionPressure + (stageFactor * 3) + randomFactor());
+        const liquidPressure = Math.round(baseLiquidPressure + (stageFactor * 8) + randomFactor());
+        
+        // Supply temp decreases with each stage
+        const supplyTemp = Math.round(baseSupplyTemp - ((i-1) * 2) + (Math.random() * 0.6 - 0.3));
+        
+        // Return temperature is relatively consistent but with slight variation
+        const returnTemp = Math.round(baseReturnTemp + (Math.random() * 0.6 - 0.3));
+        
+        stages.push({
+            stageNumber: i,
+            suctionPressure: suctionPressure,
+            liquidPressure: liquidPressure,
+            supplyTemp: supplyTemp,
+            returnTemp: returnTemp
+        });
+    }
+    
+    return {
+        stages
+    };
+}
+
+function generateStageTableRows(stages) {
+    let html = '';
+    
+    stages.forEach(stage => {
+        html += `
+            <tr>
+                <td>${stage.stageNumber}</td>
+                <td>${stage.suctionPressure}</td>
+                <td>${stage.liquidPressure}</td>
+                <td>${stage.supplyTemp}°F</td>
+                <td>${stage.returnTemp}°F</td>
+            </tr>
+        `;
+    });
+    
+    return html;
+}
+```
+
+Now you have the project split into three separate files:
+
+1. `index.html` - Contains the HTML structure
+2. `hvac-diagnostic.css` - Contains all the styling
+3. `hvac-diagnostic.js` - Contains all the JavaScript logic
+
+This separation makes the code more maintainable and follows best practices for web development. To use this, create these three files in the same directory and open the HTML file in a browser.
+
+The functionality remains exactly the same as before, just organized into separate files for better structure and organization.
