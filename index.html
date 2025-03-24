@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HVAC Equipment Inventory</title>
+    <!-- Using the latest versions of jsPDF and html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -83,8 +84,26 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
         @media print {
-            .controls, #pdfControls {
+            .controls, #pdfControls, #status {
                 display: none;
             }
         }
@@ -93,8 +112,10 @@
 <body>
     <div id="pdfControls">
         <h2>HVAC Equipment Inventory Template</h2>
-        <p>Edit all fields as needed, then click "Generate PDF" to create a PDF of your inventory.</p>
+        <p>Edit all fields as needed, then click "Generate PDF" to create a downloadable PDF of your inventory.</p>
     </div>
+
+    <div id="status"></div>
 
     <div class="container" id="content">
         <div class="header">
@@ -305,25 +326,39 @@
     </div>
 
     <script>
-        // Add jsPDF to window
-        window.jsPDF = window.jspdf.jsPDF;
+        // Make sure jsPDF is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if jsPDF is loaded
+            if (typeof window.jspdf === 'undefined') {
+                showStatus('PDF library not loaded properly. Please check your internet connection.', 'error');
+                return;
+            }
+            
+            // Add jsPDF to window
+            window.jsPDF = window.jspdf.jsPDF;
+        });
 
-        // Generate PDF function
-        document.getElementById('generatePdf').addEventListener('click', function() {
-            // Temporarily hide buttons
-            const controls = document.querySelector('.controls');
-            const pdfControls = document.getElementById('pdfControls');
-            controls.style.display = 'none';
-            pdfControls.style.display = 'none';
+        // Show status message
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = type;
+            status.style.display = 'block';
             
-            // Get content and convert to PDF
+            if (type !== 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Create a printable version of the content
+        function createPrintableContent() {
             const content = document.getElementById('content');
-            
-            // Get current inputs and replace with plain text for PDF
-            const originalHtml = content.innerHTML;
+            const printableContent = content.cloneNode(true);
             
             // Replace inputs with their values
-            const inputs = content.querySelectorAll('input');
+            const inputs = printableContent.querySelectorAll('input');
             inputs.forEach(input => {
                 const span = document.createElement('span');
                 span.textContent = input.value;
@@ -331,15 +366,20 @@
                 input.parentNode.replaceChild(span, input);
             });
             
-            // Create PDF
-            html2canvas(content).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            return printableContent;
+        }
+
+        // Generate PDF function
+        document.getElementById('generatePdf').addEventListener('click', function() {
+            showStatus('Generating PDF, please wait...', 'info');
+            
+            try {
+                // Create a temporary div for the printable content
+                const tempDiv = document.createElement('div');
+                tempDiv.appendChild(createPrintableContent());
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                document.body.appendChild(tempDiv);
                 
                 // Get header text for filename
                 const headerText = document.getElementById('headerText').value;
@@ -347,15 +387,46 @@
                 const storeNumber = headerText.match(/#(\d+)/) ? headerText.match(/#(\d+)/)[1] : '';
                 const filename = `${storeName}_${storeNumber}_HVAC_Inventory.pdf`;
                 
-                pdf.save(filename);
-                
-                // Restore the original HTML with inputs
-                content.innerHTML = originalHtml;
-                
-                // Show buttons again
-                controls.style.display = 'block';
-                pdfControls.style.display = 'block';
-            });
+                // Create PDF with a more reliable approach
+                setTimeout(() => {
+                    html2canvas(tempDiv, {
+                        scale: 2, // Higher scale for better quality
+                        logging: false,
+                        useCORS: true
+                    }).then(canvas => {
+                        try {
+                            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                            const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+                            const pdfWidth = pdf.internal.pageSize.getWidth();
+                            const pdfHeight = pdf.internal.pageSize.getHeight();
+                            
+                            const imgWidth = canvas.width;
+                            const imgHeight = canvas.height;
+                            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+                            const imgX = (pdfWidth - imgWidth * ratio) / 2;
+                            const imgY = 0;
+                            
+                            pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+                            
+                            // Save the PDF
+                            pdf.save(filename);
+                            
+                            // Clean up
+                            document.body.removeChild(tempDiv);
+                            showStatus('PDF generated successfully!', 'success');
+                        } catch (err) {
+                            console.error('Error in PDF generation:', err);
+                            showStatus('Error creating PDF. Try again or check console for details.', 'error');
+                        }
+                    }).catch(err => {
+                        console.error('Error in html2canvas:', err);
+                        showStatus('Error capturing content. Try again or check console for details.', 'error');
+                    });
+                }, 500); // Short delay to ensure rendering completes
+            } catch (err) {
+                console.error('Error in overall PDF process:', err);
+                showStatus('Something went wrong. Please try again.', 'error');
+            }
         });
 
         // Add row function
@@ -365,7 +436,7 @@
             const newRow = document.createElement('tr');
             
             newRow.innerHTML = `
-                <td><input type="text" value=""></td>
+                <td><input type="text" value="${rowCount + 1}"></td>
                 <td><input type="text"></td>
                 <td><input type="text"></td>
                 <td><input type="text"></td>
